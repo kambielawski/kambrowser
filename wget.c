@@ -1,5 +1,5 @@
 /* 
-STARTER CODE FROM: https://stackoverflow.com/questions/11208299/how-to-make-an-http-get-request-in-c-without-libcurl
+initial code from: https://stackoverflow.com/questions/11208299/how-to-make-an-http-get-request-in-c-without-libcurl
 */
 
 #define _XOPEN_SOURCE 700
