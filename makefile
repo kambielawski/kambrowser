@@ -4,7 +4,7 @@ main: main.o Browser.o
 main.o: main.cpp Browser.h
 	g++ -c main.cpp
 
-Browser.o: Browser.cpp Browser.h networking/wget.c
+Browser.o: Browser.cpp Browser.h networking/http_request.c
 	g++ -c Browser.cpp
 
 clean:
