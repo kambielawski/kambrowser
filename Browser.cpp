@@ -32,7 +32,7 @@ void Browser::sendHttpRequest(std::string url) {
     throw("failed to fork");
   } else if (rc == 0) {
     char *httpRequest[2];
-    httpRequest[0] = "./networking/wget";
+    httpRequest[0] = "./networking/http_request";
     httpRequest[1] = &url[0];
     httpRequest[2] = NULL;
     execvp(httpRequest[0], httpRequest);
