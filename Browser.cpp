@@ -8,11 +8,13 @@ void Browser::run() {
   std::string url;
   std::cout << "=============\n";
   std::cout << "KAMBrowser\n";
-  std::cout << "=============\n";
 
   while (url != "quit") {
+    std::cout << "=============\n";
     std::cout << ">> ";
     std::getline(std::cin, url);
+    std::cout << "=============\n";
+
     if (url != "quit") {
       std::cout << "Sending HTTP request to " << url << std::endl;
       this->sendHttpRequest(url);
@@ -27,15 +29,17 @@ void Browser::run() {
 
 void Browser::sendHttpRequest(std::string url) {
   std::cout << url << std::endl;
+  /* fork this process and use child to execute http request */
   int rc = fork();
   if (rc < 0) {
     throw("failed to fork");
   } else if (rc == 0) {
-    char *httpRequest[2];
-    httpRequest[0] = "./networking/http_request";
-    httpRequest[1] = &url[0];
-    httpRequest[2] = NULL;
-    execvp(httpRequest[0], httpRequest);
+    char *requestArgs[2];
+    requestArgs[0] = "./networking/http_request";
+    requestArgs[1] = &url[0];
+    requestArgs[2] = NULL;
+    /* execute http request */
+    execvp(requestArgs[0], requestArgs);
   } else {
     wait(NULL);
   }
