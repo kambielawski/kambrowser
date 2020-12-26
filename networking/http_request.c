@@ -28,7 +28,6 @@ int connect_retry(int domain, int type, int protocol, const struct sockaddr *add
     // make the connection
     if (connect(socket_fd, addr, alen) == 0) {
       /* connection accepted */
-      printf("connection accepted\n");
       return (socket_fd);
     }
     close(socket_fd);
@@ -141,15 +140,12 @@ int main(int argc, char** argv) {
         nbytes_total += nbytes_last;
     }
 
-    // int filed = creat("response.txt", S_IRUSR | S_IWUSR | S_IXUSR);
+    int filed = creat("response.txt", S_IRUSR | S_IWUSR | S_IXUSR);
 
     /* Read the response. */
-    fprintf(stderr, "debug: before first read\n");
     while ((nbytes_total = read(socket_file_descriptor, buffer, BUFSIZ)) > 0) {
-        fprintf(stderr, "debug: after a read\n");
-        write(STDOUT_FILENO, buffer, nbytes_total);
+        write(filed, buffer, nbytes_total);
     }
-    fprintf(stderr, "debug: after last read\n");
     if (nbytes_total == -1) {
         perror("read");
         exit(EXIT_FAILURE);
