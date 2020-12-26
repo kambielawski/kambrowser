@@ -1,5 +1,5 @@
-main: main.o Browser.o
-	g++ -std=c++11 main.o Browser.o -o main
+browser: main.o Browser.o
+	g++ -std=c++11 main.o Browser.o -o browser
 
 main.o: main.cpp Browser.h
 	g++ -c main.cpp
