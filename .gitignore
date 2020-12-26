@@ -1,2 +1,6 @@
 response.txt
-wget
+response_body.txt
+response_headers.txt
+http_request
+*.swp
+*.o
