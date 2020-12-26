@@ -42,5 +42,33 @@ void Browser::sendHttpRequest(std::string url) {
     execvp(requestArgs[0], requestArgs);
   } else {
     wait(NULL);
+    this->parseResponse();
   }
+}
+
+void Browser::parseResponse() {
+  response.open("response.txt");
+  headers.open("response_headers.txt");
+  body.open("response_body.txt");
+
+  std::string line; 
+  bool isBody = false;
+
+  /* separate headers & body from response.txt */ 
+  while (!response.eof()) {
+    std::getline(response, line);
+    /* check for carriage return (x0d) or linefeed (x0a) */
+    if (line == "\x0a" || line == "\x0d") {
+      isBody = true;
+      continue;
+    }
+
+    if (isBody) {
+      body << line << "\n";
+    } else {
+      headers << line << "\n";
+    }
+  }
+
+  response.close();
 }
