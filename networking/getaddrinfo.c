@@ -52,6 +52,7 @@ void print_address(struct addrinfo *ai) {
   const char *addr;
   struct sockaddr_in  *sinp;
   struct sockaddr_in6 *sin6p;
+
   if (ai->ai_family == AF_INET) {
     sinp = (struct sockaddr_in*)ai->ai_addr; // cast sockaddr struct to sockaddr_in
     addr = inet_ntop(AF_INET, &sinp->sin_addr, ipv4_abuf, INET_ADDRSTRLEN);
@@ -78,18 +79,7 @@ int main(int argc, char *argv[]) {
 
   int res;
   struct addrinfo     *result;
-  struct addrinfo     hints;
   struct sockaddr     *sockaddr;
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_flags = AI_CANONNAME;
-  hints.ai_family = 0;
-  hints.ai_socktype = 0;
-  hints.ai_protocol = 0;
-  hints.ai_addrlen = 0;
-  hints.ai_canonname = NULL;
-  hints.ai_addr = NULL;
-  hints.ai_next = NULL;
 
   if ((res = getaddrinfo(argv[1], argv[2], NULL, &result)) != 0) {
     fprintf(stderr, "error: getaddrinfo %d\n", res);
@@ -99,6 +89,8 @@ int main(int argc, char *argv[]) {
   print_protocol(result);
   print_family(result);
   print_address(result);
+
+  
 
   return 0;
 }

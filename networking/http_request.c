@@ -1,156 +1,165 @@
-/* 
-initial code from: https://stackoverflow.com/questions/11208299/how-to-make-an-http-get-request-in-c-without-libcurl
-*/
-
-#define _XOPEN_SOURCE 700
-#include <arpa/inet.h>
-#include <assert.h>
-#include <netdb.h> /* getprotobyname */
-#include <netinet/in.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <fcntl.h> /* open() flag option O_RDWR */
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
-/*
- * connect with exponential back-off
- */
-int connect_retry(int domain, int type, int protocol, const struct sockaddr *addr, socklen_t alen) {
+#define MAX_WAIT 128
+#define MAX_REQ_LEN 1024
+
+void print_protocol (struct addrinfo *ai) {
+  printf ("protocol: ");
+  switch (ai->ai_protocol) {
+    case 0:
+      printf("default\n");
+      break;
+    case IPPROTO_TCP:
+      printf("tcp\n");
+      break;
+    case IPPROTO_UDP:
+      printf("udp\n");
+      break;
+    case IPPROTO_RAW:
+      printf("raw\n");
+      break;
+    default:
+      printf("unknown: (%d)", ai->ai_protocol);
+  }
+}
+
+void print_family (struct addrinfo *ai) {
+  printf("family: ");
+  switch (ai->ai_family) {
+    case AF_INET:
+      printf("IPv4");
+      break;
+    case AF_INET6:
+      printf("IPv6");
+      break;
+    case AF_UNIX:
+      printf("UNIX (local)");
+      break;
+    case AF_UNSPEC:
+      printf("unspecified");
+      break;
+    default:
+      printf("unknown");
+  }
+  printf(" (%d)\n", ai->ai_family);
+}
+
+void print_address(struct addrinfo *ai) {
+  char ipv4_abuf[INET_ADDRSTRLEN];
+  char ipv6_abuf[INET6_ADDRSTRLEN];
+  const char *addr;
+  struct sockaddr_in  *sinp;
+  struct sockaddr_in6 *sin6p;
+
+  if (ai->ai_family == AF_INET) {
+    sinp = (struct sockaddr_in*)ai->ai_addr; // cast sockaddr struct to sockaddr_in
+    addr = inet_ntop(AF_INET, &sinp->sin_addr, ipv4_abuf, INET_ADDRSTRLEN);
+    printf("address: %s\n", addr?addr:"unknown");
+  }
+  if (ai->ai_family == AF_INET6) {
+    sin6p = (struct sockaddr_in6*)ai->ai_addr; // cast sockaddr struct to sockaddr_in6
+    addr = inet_ntop(AF_INET6, &sin6p->sin6_addr, ipv6_abuf, INET6_ADDRSTRLEN);
+    printf("address: %s\n", addr?addr:"unknown");
+  }
+
+}
+
+void print_address_length(struct addrinfo *ai) {
+  printf("address length: %d bytes\n", (int) ai->ai_addrlen);
+}
+
+int connect_retry(int domain, int type, int protocol, struct sockaddr* sockaddr, socklen_t alen) {
   int numsec, socket_fd;
-  for (numsec = 1; numsec <= 128; numsec <<= 1) {
-    // create a socket
+  for (numsec = 1; numsec < MAX_WAIT; numsec <<= 1) {
+    // create socket
     if ((socket_fd = socket(domain, type, protocol)) < 0) {
       return (-1);
     }
-    // make the connection
-    if (connect(socket_fd, addr, alen) == 0) {
-      /* connection accepted */
+
+    if (connect(socket_fd, sockaddr, alen) == 0) {
+      // connection accepted
       return (socket_fd);
     }
     close(socket_fd);
-    
-    /* delay before trying again */
-    printf("delay: %d\n", numsec);
-    if (numsec < 128) 
+
+    // wait for next try
+    if (numsec <= MAX_WAIT/2)
       sleep(numsec);
   }
   return (-1);
 }
 
-int main(int argc, char** argv) {
-    char buffer[BUFSIZ];
-    enum CONSTEXPR { MAX_REQUEST_LEN = 1024};
-    char request[MAX_REQUEST_LEN];
-    char request_template[] = "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n";
-    struct protoent *protoent;
-    char *hostname = "example.com";
-    in_addr_t in_addr;
-    int request_len;
-    int socket_file_descriptor;
-    ssize_t nbytes_total, nbytes_last;
-    struct hostent *hostent;
-    struct sockaddr_in sockaddr_in;
-    unsigned short server_port = 80;
+int main(int argc, char *argv[]) {
 
-    if (argc > 1)
-        hostname = argv[1];
-    if (argc > 2)
-        // if port is given in cmdline, str to unsigned long it
-        server_port = strtoul(argv[2], NULL, 10);
+  if (argc < 3) {
+    fprintf(stderr, "usage: %s hostname port\n", argv[0]);
+    exit(1);
+  }
 
-    request_len = snprintf(request, MAX_REQUEST_LEN, request_template, hostname);
-    if (request_len >= MAX_REQUEST_LEN) {
-        fprintf(stderr, "request length large: %d\n", request_len);
-        exit(EXIT_FAILURE);
+  // socket/connection
+  int socket_fd; // socket file descriptor
+  struct addrinfo     *addrinfo;
+  struct sockaddr     *sockaddr;
+  struct sockaddr_in  *sockaddr_in;
+  struct sockaddr_in6 *sockaddr_in6;
+  
+  // http request 
+  int nbytes_total, nbytes_last;
+  int request_len;
+  char buffer[BUFSIZ];
+  char request[MAX_REQ_LEN];
+  char request_template[] = "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n";
+
+  
+  // get address info
+  if (getaddrinfo(argv[1], argv[2], NULL, &addrinfo) != 0) {
+    fprintf(stderr, "error: getaddrinfo\n");
+    exit(1);
+  }
+
+  // establish connection
+  if ((socket_fd = connect_retry(addrinfo->ai_family, SOCK_STREAM, 0, addrinfo->ai_addr, addrinfo->ai_addrlen)) == -1) {
+    fprintf(stderr, "connection timed out");
+    exit(1);
+  }
+
+  // setup request
+  if ((request_len = snprintf(request, MAX_REQ_LEN, request_template, argv[1])) >= MAX_REQ_LEN) {
+    fprintf(stderr, "error: hostname too long\n");
+    exit(1);
+  }
+
+  // write http request to socket
+  nbytes_total = 0;
+  while (nbytes_total < request_len) {
+    nbytes_last = write(socket_fd, request + nbytes_total, request_len - nbytes_total);
+    if (nbytes_last == -1) {
+      fprintf(stderr, "error: write");
+      exit(1);
     }
+    nbytes_total += nbytes_last;
+  }
 
-    /* Build the socket. */
-    // getprotobyname will return a protoent struct, defined as:
-    // struct protoent {
-    //    char *p_name;       // string of the name of protocol
-    //    char **p_aliases;   // NULL-terminated list of other names for the protocol
-    //    int  p_proto;       // protocol number
-    // }
-    protoent = getprotobyname("tcp");
-    if (protoent == NULL) {
-        perror("getprotobyname");
-        exit(EXIT_FAILURE);
-    }
+  int filed = creat("response.txt", S_IRWXU);
+  
+  // read response from socket
+  while ((nbytes_total = read(socket_fd, buffer, BUFSIZ)) > 0) {
+    write(filed, buffer, nbytes_total);
+  }
 
-    /* Build the address. */
-    // struct hostent {
-    //    cha    *h_name;       // official name of host
-    //    char  **h_aliases;    // host aliases
-    //    int     h_addrtype;   // host address type
-    //    int     h_length;     // length of address
-    //    char  **h_addr_list;  // list of addresses
-    // }
-    hostent = gethostbyname(hostname);
-    if (hostent == NULL) {
-        fprintf(stderr, "error: gethostbyname(\"%s\")\n", hostname);
-        exit(EXIT_FAILURE);
-    }
-    // in_addr is a struct containing a 32 bit int specifying an IP address
-    // if in format a.b.c.d, first 8 bits are a, second 8 are b, etc.
-    in_addr = inet_addr(inet_ntoa(*(struct in_addr*)*(hostent->h_addr_list)));
-    if (in_addr == (in_addr_t)-1) {
-        fprintf(stderr, "error: inet_addr(\"%s\")\n", *(hostent->h_addr_list));
-        exit(EXIT_FAILURE);
-    }
-    // struct sockaddr_in {
-    //    sa_family_y     sin_family;   // address family: AF_INET
-    //    in_port_y       sin_port;     // port in network byte order
-    //    struct in_addr  sin_addr;     // internet address
-    // }
-    sockaddr_in.sin_addr.s_addr = in_addr;
-    sockaddr_in.sin_family = AF_INET;
-    sockaddr_in.sin_port = htons(server_port);
+  if (nbytes_total == -1) {
+    fprintf(stderr, "error: read");
+    exit(1);
+  }
 
-    /* connect with exponential backoff */
-    // AF_INET specifies IPv4 Internet domain
-    // SOCK_STREAM is a socket that "provides a byte-stream service; applications are unaware of message boundaries"
-    if ((socket_file_descriptor = connect_retry(AF_INET, SOCK_STREAM, protoent->p_proto, (struct sockaddr*)&sockaddr_in, sizeof(sockaddr_in))) == -1) {
-      perror("connection timed out");
-      exit(EXIT_FAILURE);
-    }
+  close(socket_fd);
 
-    // socket_file_descriptor = socket(AF_INET, SOCK_STREAM, protoent->p_proto);
-    // if (socket_file_descriptor == -1) {
-    //    perror("socket");
-    //    exit(EXIT_FAILURE);
-    // }
-
-    /* Actually connect. */
-    // if (connect(socket_file_descriptor, (struct sockaddr*)&sockaddr_in, sizeof(sockaddr_in)) == -1) {
-    //    perror("connect");
-    //    exit(EXIT_FAILURE);
-    // }
-
-    /* Send HTTP request. */
-    nbytes_total = 0;
-    while (nbytes_total < request_len) {
-        nbytes_last = write(socket_file_descriptor, request + nbytes_total, request_len - nbytes_total);
-        if (nbytes_last == -1) {
-            perror("write");
-            exit(EXIT_FAILURE);
-        }
-        nbytes_total += nbytes_last;
-    }
-
-    int filed = creat("response.txt", S_IRUSR | S_IWUSR | S_IXUSR);
-
-    /* Read the response. */
-    while ((nbytes_total = read(socket_file_descriptor, buffer, BUFSIZ)) > 0) {
-        write(filed, buffer, nbytes_total);
-    }
-    if (nbytes_total == -1) {
-        perror("read");
-        exit(EXIT_FAILURE);
-    }
-
-    close(socket_file_descriptor);
-    exit(EXIT_SUCCESS);
+  return 0;
 }
