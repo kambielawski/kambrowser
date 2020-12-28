@@ -98,12 +98,13 @@ int connect_retry(int domain, int type, int protocol, struct sockaddr* sockaddr,
 
 int main(int argc, char *argv[]) {
 
-  if (argc < 3) {
-    fprintf(stderr, "usage: %s hostname port\n", argv[0]);
+  if (argc < 2) {
+    fprintf(stderr, "usage: %s hostname [port]\n", argv[0]);
     exit(1);
   }
 
   // socket/connection
+  int ai_res;
   int socket_fd; // socket file descriptor
   struct addrinfo     *addrinfo;
   struct sockaddr     *sockaddr;
@@ -117,9 +118,13 @@ int main(int argc, char *argv[]) {
   char request[MAX_REQ_LEN];
   char request_template[] = "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n";
 
-  
+  if (argc > 2) {
+    ai_res = getaddrinfo(argv[1], argv[2], NULL, &addrinfo);
+  } else {
+    ai_res = getaddrinfo(argv[1], "80", NULL, &addrinfo);
+  }
   // get address info
-  if (getaddrinfo(argv[1], argv[2], NULL, &addrinfo) != 0) {
+  if (ai_res != 0) {
     fprintf(stderr, "error: getaddrinfo\n");
     exit(1);
   }
