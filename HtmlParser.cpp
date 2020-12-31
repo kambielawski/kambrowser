@@ -1,12 +1,18 @@
 #include "HtmlParser.h"
 
-HtmlParser::HtmlParser() : string_pos(-1), tokenStack(nullptr) {}
+HtmlParser::HtmlParser() : string_pos(-1), stack_size(1)
+{
+  HtmlToken root_token = { "root", "" };
+
+  token_stack = new TokenStackNode;
+  token_stack->token = root_token;
+  token_stack->next = nullptr;
+}
 
 HtmlParser::~HtmlParser() {}
 
 void HtmlParser::parseHtmlString (char *string, int length) {
   // TODO: ensure valid html
-  std::cout << string << std::endl;
   html_string = string;
   string_length = length;
   this->getNextChar();
@@ -16,31 +22,40 @@ void HtmlParser::parseHtmlString (char *string, int length) {
 void HtmlParser::getToken () {
   this->skipWhitespace();
 
-  if (curChar == '\0') {
-    std::cout << "eof\n";
+  if (curChar == '\0') // end of file
+  {
+    // pop root node 
+    this->tokenStackPop();
     return;
-  } else if (curChar == '<') {
+  } 
+  else if (curChar == '<') // html tag
+  {
     this->getNextChar();
-    if (curChar != '/') {
+    if (curChar != '/') // opening tag
+    {
       HtmlToken nextToken;
-      // opening tag
-      nextToken.tokenType = this->readUntil('>');
-      // TODO: push token to top of stack
-      std::cout << nextToken.tokenType << std::endl;
+      nextToken.token_type = this->readUntil('>');
+      this->tokenStackPush(nextToken);
+
       this->getNextChar();
       this->getToken();
-    } else {
-      // closing tag
-      // ensure closes correct tokenType (check top of tokenStack)
+    } 
+    else // closing tag
+    {
+      this->getNextChar();
+
       std::string closingTag = this->readUntil('>');
-      std::cout << closingTag << "\n";
+      this->tokenStackPop();
+
       this->getNextChar();
       this->getToken();
     }
-  } else {
-    // parse content and add to top of tokenStack's content string
+  } 
+  else // content between tags
+  {
+    // parse content and add to top of token_stack's content string
     std::string content = this->readUntil('<');
-    std::cout << content << "\n";
+    token_stack->token.token_content = content;
     this->getToken();
   }
 }
@@ -72,4 +87,29 @@ char HtmlParser::peekNext() const {
   return html_string[string_pos+1];
 }
 
+void HtmlParser::tokenStackPush(struct HtmlToken token)
+{
+  struct TokenStackNode *new_node = new TokenStackNode;
+  new_node->token = token;
+  new_node->next = token_stack;
+  token_stack = new_node;
+  stack_size++;
 
+  new_node = nullptr;
+}
+
+void HtmlParser::tokenStackPop()
+{
+  struct TokenStackNode *temp = token_stack->next;
+
+  if (!token_stack->token.token_content.empty())
+  {
+    std::cout << token_stack->token.token_content << std::endl;
+  }
+
+  delete token_stack;
+  token_stack = temp;
+  stack_size--;
+
+  temp = nullptr;
+}

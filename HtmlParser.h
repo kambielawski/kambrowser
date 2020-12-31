@@ -3,8 +3,8 @@
 #include <string>
 
 struct HtmlToken {
-  std::string tokenType; // type of token
-  std::string tokenContent; // inside token (i.e. 'hello' in "<p>hello</p>")
+  std::string token_type; // type of token
+  std::string token_content; // inside token (i.e. 'hello' in "<p>hello</p>")
 };
 
 struct TokenStackNode {
@@ -20,18 +20,25 @@ private:
 char *html_string;
 int string_pos;
 int string_length;
+int stack_size;
 char curChar;
-TokenStackNode *tokenStack; 
+TokenStackNode *token_stack; 
 
 public:
 HtmlParser();
 ~HtmlParser();
 void parseHtmlString (char *html_string, int length);
+
+protected:
 void getNextChar ();
 void getToken ();
 void skipWhitespace();
 char peekNext() const;
 std::string readUntil(char until);
+
+// token stack management
+void tokenStackPush(struct HtmlToken token);
+void tokenStackPop();
 
 };
 
