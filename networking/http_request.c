@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
 
 #define MAX_WAIT 128
 #define MAX_REQ_LEN 1024
