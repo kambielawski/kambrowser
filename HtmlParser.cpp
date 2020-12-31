@@ -11,10 +11,11 @@ HtmlParser::HtmlParser() : string_pos(-1), stack_size(1)
 
 HtmlParser::~HtmlParser() {}
 
-void HtmlParser::parseHtmlString (char *string, int length) {
+void HtmlParser::parseHtmlString (char *string) {
   // TODO: ensure valid html
   html_string = string;
-  string_length = length;
+  string_length = this->getStrLen(string);
+  std::cout << string_length << std::endl;
   this->getNextChar();
   this->getToken();
 }
@@ -112,4 +113,14 @@ void HtmlParser::tokenStackPop()
   stack_size--;
 
   temp = nullptr;
+}
+
+int HtmlParser::getStrLen(char *string) const
+{
+  int len = 0;
+  while (string[len] != '\0')
+  {
+    len++;
+  }
+  return len;
 }

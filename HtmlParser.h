@@ -27,9 +27,10 @@ TokenStackNode *token_stack;
 public:
 HtmlParser();
 ~HtmlParser();
-void parseHtmlString (char *html_string, int length);
+void parseHtmlString (char *html_string);
 
 protected:
+int getStrLen(char *string) const;
 void getNextChar ();
 void getToken ();
 void skipWhitespace();
