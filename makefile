@@ -7,8 +7,13 @@ main.o: main.cpp Browser.h
 Browser.o: Browser.cpp Browser.h
 	g++ -c Browser.cpp
 
-HtmlParser.o: HtmlParser.cpp HtmlParser.h
+HtmlParser.o: html_parser/HtmlParser.cpp html_parser/HtmlParser.h
 	g++ -c HtmlParser.cpp
+
+all:
+	$(MAKE) -C networking
+	$(MAKE) -C html_parser
 
 clean:
 	rm -f main *.o
+	cd html_parser && rm -f HtmlParser.o
