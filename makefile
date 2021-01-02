@@ -1,3 +1,5 @@
+VPATH=html_parser
+
 browser: main.o Browser.o HtmlParser.o
 	g++ -std=c++11 main.o Browser.o HtmlParser.o -o browser
 
@@ -7,8 +9,8 @@ main.o: main.cpp Browser.h
 Browser.o: Browser.cpp Browser.h
 	g++ -c Browser.cpp
 
-HtmlParser.o: html_parser/HtmlParser.cpp html_parser/HtmlParser.h
-	g++ -c HtmlParser.cpp
+HtmlParser.o: HtmlParser.cpp HtmlParser.h
+	g++ -c html_parser/HtmlParser.cpp
 
 all:
 	$(MAKE) -C networking
