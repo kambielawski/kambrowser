@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stdlib.h>
+#include <stdio.h>
 
 struct HtmlToken {
   std::string token_type; // type of token
@@ -28,6 +30,7 @@ public:
 HtmlParser();
 ~HtmlParser();
 void parseHtmlString (char *html_string);
+void parseHtmlFromFile (const char *file_name);
 
 protected:
 int getStrLen(char *string) const;

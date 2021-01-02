@@ -3,9 +3,8 @@
 #include <string>
 
 int main (int argc, char *argv[]) {
-  char *html_string = "<html><body>hello, world</body></html>";
   HtmlParser parser;
-  parser.parseHtmlString(html_string);
+  parser.parseHtmlFromFile("response_body.txt");
 //    Browser kambrowser;
 //    kambrowser.run();
  

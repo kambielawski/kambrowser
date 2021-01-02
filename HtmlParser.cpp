@@ -20,6 +20,29 @@ void HtmlParser::parseHtmlString (char *string) {
   this->getToken();
 }
 
+void HtmlParser::parseHtmlFromFile (const char *file_name) {
+  std::ifstream infile;
+
+  int file_size = 0;
+  char *str = NULL;
+  
+  
+  infile.open(file_name);
+  if (!infile.is_open())
+    throw std::runtime_error("could not open file \n");
+
+  infile.seekg(0, std::ios::end); // go to end of file
+  file_size = infile.tellg();     // set file_size to the location (this is the length)
+  infile.seekg(0, std::ios::beg); // go back to beginning
+  
+  str = new char[file_size];
+  infile.read(str, file_size);
+  infile.close();
+
+  this->parseHtmlString(str);
+  
+}
+
 void HtmlParser::getToken () {
   this->skipWhitespace();
 
@@ -77,7 +100,7 @@ void HtmlParser::getNextChar () {
 }
 
 void HtmlParser::skipWhitespace () {
-  if (curChar == '\n' || curChar == ' ' || curChar == '\r') {
+  while (isspace(curChar)) {
     this->getNextChar();
   }
 }
