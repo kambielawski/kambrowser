@@ -4,9 +4,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+struct TokenAttribute {
+  std::string attr;
+  std::string value;
+};
+
 struct HtmlToken {
   std::string token_type; // type of token
   std::string token_content; // inside token (i.e. 'hello' in "<p>hello</p>")
+  TokenAttribute token_attributes[10];
 };
 
 struct TokenStackNode {

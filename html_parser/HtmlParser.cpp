@@ -11,7 +11,8 @@ HtmlParser::HtmlParser() : string_pos(-1), stack_size(1)
 
 HtmlParser::~HtmlParser() {}
 
-void HtmlParser::parseHtmlString (char *string) {
+void HtmlParser::parseHtmlString (char *string)
+{
   // TODO: ensure valid html
   html_string = string;
   string_length = this->getStrLen(string);
@@ -20,7 +21,8 @@ void HtmlParser::parseHtmlString (char *string) {
   this->getToken();
 }
 
-void HtmlParser::parseHtmlFromFile (const char *file_name) {
+void HtmlParser::parseHtmlFromFile (const char *file_name)
+{
   std::ifstream infile;
 
   int file_size = 0;
@@ -35,21 +37,26 @@ void HtmlParser::parseHtmlFromFile (const char *file_name) {
   file_size = infile.tellg();     // set file_size to the location (this is the length)
   infile.seekg(0, std::ios::beg); // go back to beginning
   
-  str = new char[file_size];
+  str = new char[file_size+1];
   infile.read(str, file_size);
+  str[file_size] = '\0';
   infile.close();
 
   this->parseHtmlString(str);
+
+  delete [] str;
   
 }
 
-void HtmlParser::getToken () {
+void HtmlParser::getToken ()
+{
   this->skipWhitespace();
 
   if (curChar == '\0') // end of file
   {
     // pop root node 
-    this->tokenStackPop();
+    while (this->token_stack != nullptr)
+      this->tokenStackPop();
     return;
   } 
   else if (curChar == '<') // html tag
@@ -84,7 +91,8 @@ void HtmlParser::getToken () {
   }
 }
 
-std::string HtmlParser::readUntil (char until) {
+std::string HtmlParser::readUntil (char until)
+{
   std::string ret;
   while (curChar != until) {
     ret.append(1, curChar);
@@ -93,19 +101,22 @@ std::string HtmlParser::readUntil (char until) {
   return ret;
 }
 
-void HtmlParser::getNextChar () {
+void HtmlParser::getNextChar ()
+{
   string_pos++; 
   if (string_pos <= string_length)
     curChar = html_string[string_pos];
 }
 
-void HtmlParser::skipWhitespace () {
+void HtmlParser::skipWhitespace ()
+{
   while (isspace(curChar)) {
     this->getNextChar();
   }
 }
 
-char HtmlParser::peekNext() const {
+char HtmlParser::peekNext() const
+{
   if (string_pos > string_length)
     throw std::runtime_error("peeked off end of html string\n");
   return html_string[string_pos+1];
@@ -142,8 +153,6 @@ int HtmlParser::getStrLen(char *string) const
 {
   int len = 0;
   while (string[len] != '\0')
-  {
     len++;
-  }
   return len;
 }
