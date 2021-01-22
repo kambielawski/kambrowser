@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
   }
 
   // establish connection
-  if ((socket_fd = connect_retry(addrinfo->ai_family, SOCK_STREAM, 0, addrinfo->ai_addr, addrinfo->ai_addrlen)) == -1) {
+  if ((socket_fd = connect_retry(addrinfo->ai_family, addrinfo->ai_socktype, 0, addrinfo->ai_addr, addrinfo->ai_addrlen)) == -1) {
     fprintf(stderr, "connection timed out");
     exit(1);
   }
