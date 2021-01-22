@@ -87,6 +87,7 @@ void HtmlParser::getToken ()
         }
         else // opening tag
         {
+            // TODO: separate attributes from tag type
             HtmlToken nextToken;
             nextToken.token_type = this->readUntil('>');
             this->tokenStackPush(nextToken);
@@ -189,14 +190,23 @@ void HtmlParser::tokenStackPop()
 
     if (!token_stack->token.token_content.empty())
     {
-        std::cout << token_stack->token.token_content << std::endl;
+        // std::cout << token_stack->token.token_content << std::endl;
     }
 
+    this->emitDomNode(token_stack->token);
     delete token_stack;
     token_stack = temp;
     stack_size--;
 
     temp = nullptr;
+}
+
+void HtmlParser::emitDomNode(HtmlToken token)
+{
+    std::cout << "token type: " << token.token_type << std::endl;
+    std::cout << "token content: " << token.token_content << std::endl;
+    std::cout << "token token attributes: " << token.token_attributes << std::endl;
+
 }
 
 int HtmlParser::getStrLen(char *string) const

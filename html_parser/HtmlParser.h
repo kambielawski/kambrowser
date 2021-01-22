@@ -4,15 +4,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct TokenAttribute {
-    std::string attr;
-    std::string value;
-};
+#include "DomTree.h"
+/*
+Attribute struct,
+DomNode struct,
+enum DomNodeType
+*/
 
 struct HtmlToken {
-    std::string token_type; // type of token
-    std::string token_content; // inside token (i.e. 'hello' in "<p>hello</p>")
-  TokenAttribute token_attributes[10];
+    std::string token_type;         /* type of token (string) */
+    std::string token_content;      /* inside token (i.e. 'hello' in "<p>hello</p>") */
+    std::string token_attributes;   /* attributes of html tag */ 
 };
 
 struct TokenStackNode {
@@ -49,6 +51,7 @@ class HtmlParser {
     void ignoreComment ();
     bool checkValidDoctype () const;
     void parseDoctype();
+    void emitDomNode(HtmlToken token);
 
     // token stack management
     void tokenStackPush(struct HtmlToken token);
