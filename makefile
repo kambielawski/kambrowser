@@ -1,7 +1,5 @@
-VPATH=html_parser
-
 browser: main.o Browser.o HtmlParser.o
-	g++ -std=c++11 main.o Browser.o HtmlParser.o -o browser
+	g++ -std=c++11 main.o Browser.o html_parser/HtmlParser.o -o browser
 
 main.o: main.cpp Browser.h
 	g++ -c main.cpp
