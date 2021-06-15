@@ -64,13 +64,13 @@ void print_address(struct addrinfo *ai) {
     sinp = (struct sockaddr_in*)ai->ai_addr; // cast sockaddr struct to sockaddr_in
     addr = inet_ntop(AF_INET, &sinp->sin_addr, ipv4_abuf, INET_ADDRSTRLEN);
     printf("address: %s\n", addr?addr:"unknown");
-  }
-  if (ai->ai_family == AF_INET6) {
+  } else if (ai->ai_family == AF_INET6) {
     sin6p = (struct sockaddr_in6*)ai->ai_addr; // cast sockaddr struct to sockaddr_in6
     addr = inet_ntop(AF_INET6, &sin6p->sin6_addr, ipv6_abuf, INET6_ADDRSTRLEN);
     printf("address: %s\n", addr?addr:"unknown");
+  } else {
+    printf("Address family not IPv4 or IPv6\n");
   }
-
 }
 
 void print_address_length(struct addrinfo *ai) {
@@ -109,9 +109,6 @@ int main(int argc, char *argv[]) {
   int ai_res;
   int socket_fd; // socket file descriptor
   struct addrinfo     *addrinfo;
-  struct sockaddr     *sockaddr;
-  struct sockaddr_in  *sockaddr_in;
-  struct sockaddr_in6 *sockaddr_in6;
   
   // http request 
   int nbytes_total, nbytes_last;
